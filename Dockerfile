@@ -1,7 +1,5 @@
 FROM ubuntu:18.04
 
-ARG COPTER_TAG=Copter-4.0.3
-
 # install git 
 RUN apt-get update && apt-get install -y git; git config --global url."https://github.com/".insteadOf git://github.com/
 
@@ -9,8 +7,10 @@ RUN apt-get update && apt-get install -y git; git config --global url."https://g
 RUN git clone https://github.com/ArduPilot/ardupilot.git ardupilot
 WORKDIR ardupilot
 
+ARG VEHICLE_TAG=ArduPlane-4.0.3
+
 # Checkout the latest Copter...
-RUN git checkout ${COPTER_TAG}
+RUN git checkout ${VEHICLE_TAG}
 
 # Now start build instructions from http://ardupilot.org/dev/docs/setting-up-sitl-on-linux.html
 RUN git submodule update --init --recursive
@@ -28,10 +28,10 @@ RUN USER=nobody Tools/environment_install/install-prereqs-ubuntu.sh -y
 # Continue build instructions from https://github.com/ArduPilot/ardupilot/blob/master/BUILD.md
 RUN ./waf distclean
 RUN ./waf configure --board sitl
-RUN ./waf copter
-RUN ./waf rover 
+#RUN ./waf copter
+#RUN ./waf rover 
 RUN ./waf plane
-RUN ./waf sub
+#RUN ./waf sub
 
 # TCP 5760 is what the sim exposes by default
 EXPOSE 5760/tcp
@@ -44,7 +44,9 @@ ENV ALT 14
 ENV DIR 270
 ENV MODEL +
 ENV SPEEDUP 1
-ENV VEHICLE ArduCopter
+ENV VEHICLE ArduPlane
+
+#COPY plane.parm .
 
 # Finally the command
-ENTRYPOINT /ardupilot/Tools/autotest/sim_vehicle.py --vehicle ${VEHICLE} -I${INSTANCE} --custom-location=${LAT},${LON},${ALT},${DIR} -w --frame ${MODEL} --no-rebuild --no-mavproxy --speedup ${SPEEDUP}
+ENTRYPOINT /ardupilot/Tools/autotest/sim_vehicle.py --vehicle ${VEHICLE} -I${INSTANCE} --custom-location=${LAT},${LON},${ALT},${DIR} -w --frame ${MODEL} --no-rebuild --no-mavproxy --speedup ${SPEEDUP} -f plane.parm
